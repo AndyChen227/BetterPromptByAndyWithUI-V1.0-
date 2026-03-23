@@ -2,7 +2,6 @@ package com.promptopt.web;
 
 import com.promptopt.TokenCounter;
 import com.promptopt.strategy.*;
-import org.example.DomainAnalyzer;
 import org.example.PromptOptimizer;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -46,8 +45,7 @@ public class PromptController {
         PromptOptimizer optimizer = new PromptOptimizer();
         String optimized = optimizer.optimize(compressed);
 
-        DomainAnalyzer analyzer = new DomainAnalyzer();
-        String domain = analyzer.analyze(prompt).name();
+        String domain = optimizer.getLastDetectedDomain().name();
 
         model.addAttribute("originalPrompt", prompt);
         model.addAttribute("compressedPrompt", compressed);

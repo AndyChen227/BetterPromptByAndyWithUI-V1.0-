@@ -1,5 +1,11 @@
 package com.promptopt.strategy;
 
+import com.promptopt.RuleLoader;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.regex.Pattern;
+
 /**
  * RemoveRedundancyStrategy strips out polite filler phrases that add words
  * but carry no actual meaning for an AI model.
@@ -13,23 +19,36 @@ package com.promptopt.strategy;
  */
 public class RemoveRedundancyStrategy implements CompressionStrategy {
 
+    // The phrase list lives in a JSON resource so it is easy to update later.
+    private static final String RULES_PATH = "rules/redundancy_phrases.json";
+    private static final List<String> REDUNDANCY_PHRASES =
+            new RuleLoader().loadStringList(RULES_PATH).stream()
+                    .sorted(Comparator.comparingInt(String::length).reversed())
+                    .toList();
+
     @Override
     public String compress(String prompt) {
+        // Return early for null or blank input so the rest of the logic stays simple.
+        if (prompt == null || prompt.isBlank()) {
+            return prompt;
+        }
+
         String result = prompt;
 
-        // Each call removes one filler phrase and collapses any leftover spaces.
-        // Order matters: remove longer phrases first to avoid partial matches.
-        result = result.replaceAll("(?i)can you please\\s*", "");
-        result = result.replaceAll("(?i)could you help me\\s*", "");
-        result = result.replaceAll("(?i)i was wondering\\s*", "");
-        result = result.replaceAll("(?i)i would like to know\\s*", "");
-        result = result.replaceAll("(?i)would you be able to\\s*", "");
-        result = result.replaceAll("(?i)if you don't mind\\s*", "");
+        // Remove longer phrases first so a short phrase does not partially consume them.
+        for (String phrase : REDUNDANCY_PHRASES) {
+            // Also remove optional punctuation right after the phrase, plus nearby spaces.
+            String regex = "(?i)" + Pattern.quote(phrase) + "\\s*[,;:.!?-]?\\s*";
+            result = result.replaceAll(regex, " ");
+        }
 
-        // Collapse any double spaces created by the removals, then trim ends.
+        // Clean up punctuation and spacing that may be left behind after removal.
+        result = result.replaceAll("\\s+([,;:.!?])", "$1");
+        result = result.replaceAll("([,;:.!?-])\\1+", "$1");
+        result = result.replaceAll("^[\\s,;:.!?-]+", "");
         result = result.replaceAll("\\s{2,}", " ").trim();
 
-        // Capitalize the first letter since removal may have lowercased the start.
+        // Capitalize the first letter after cleanup if anything is left.
         if (!result.isEmpty()) {
             result = Character.toUpperCase(result.charAt(0)) + result.substring(1);
         }
