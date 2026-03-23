@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>BetterPrompt v3</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f5f4f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 40px 24px; }
+        .page { max-width: 720px; margin: 0 auto; }
+        .logo { font-size: 11px; font-weight: 500; color: #888780; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+        .title { font-size: 26px; font-weight: 500; color: #2C2C2A; margin-bottom: 4px; }
+        .subtitle { font-size: 14px; color: #5F5E5A; margin-bottom: 28px; }
+        .card { background: #fff; border: 0.5px solid #D3D1C7; border-radius: 14px; padding: 22px; margin-bottom: 16px; }
+        .label { font-size: 11px; font-weight: 500; color: #888780; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+        textarea { width: 100%; border: 0.5px solid #D3D1C7; border-radius: 8px; padding: 12px 14px; font-size: 14px; color: #2C2C2A; background: #f5f4f0; resize: vertical; font-family: inherit; line-height: 1.6; outline: none; }
+        textarea:focus { border-color: #85B7EB; }
+        .strategy-grid { display: flex; flex-direction: column; gap: 6px; margin: 16px 0 16px; }
+        .strategy-option { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; border: 0.5px solid #D3D1C7; background: #f5f4f0; cursor: pointer; transition: border-color .15s; }
+        .strategy-option:hover { border-color: #85B7EB; }
+        .strategy-option.selected { background: #E6F1FB; border-color: #85B7EB; }
+        .strategy-num { width: 22px; height: 22px; border-radius: 50%; background: #D3D1C7; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: #5F5E5A; flex-shrink: 0; }
+        .strategy-option.selected .strategy-num { background: #378ADD; color: #fff; }
+        .strategy-name { font-size: 13px; font-weight: 500; color: #2C2C2A; }
+        .strategy-desc { font-size: 11px; color: #888780; margin-top: 1px; }
+        .strategy-option.selected .strategy-name { color: #0C447C; }
+        .strategy-option.selected .strategy-desc { color: #378ADD; }
+        .btn { width: 100%; background: #2C2C2A; color: #F1EFE8; border: none; border-radius: 8px; padding: 13px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+        .btn:hover { background: #444441; }
+        .divider { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .divider-line { flex: 1; height: 0.5px; background: #D3D1C7; }
+        .divider-text { font-size: 11px; color: #B4B2A9; letter-spacing: .04em; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .pane { border-radius: 10px; padding: 14px 16px; }
+        .pane-before { background: #f5f4f0; border: 0.5px solid #D3D1C7; }
+        .pane-after { background: #E6F1FB; border: 0.5px solid #85B7EB; }
+        .pane-tag { font-size: 10px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 8px; }
+        .pane-tag-before { color: #888780; }
+        .pane-tag-after { color: #185FA5; }
+        .pane-text { font-size: 13px; line-height: 1.65; white-space: pre-wrap; }
+        .pane-text-before { color: #5F5E5A; }
+        .pane-text-after { color: #0C447C; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+        .stat { background: #f5f4f0; border-radius: 10px; padding: 12px 14px; }
+        .stat-label { font-size: 11px; color: #888780; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: 500; color: #2C2C2A; }
+        .stat-saved { background: #E1F5EE; }
+        .stat-saved .stat-label { color: #0F6E56; }
+        .stat-saved .stat-value { color: #085041; }
+        .domain-pill { display: inline-block; background: #FAEEDA; border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 500; color: #633806; }
+        .tip { font-size: 12px; color: #888780; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid #D3D1C7; }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="logo">BetterPrompt</div>
+    <h1 class="title">Make your prompts work harder</h1>
+    <p class="subtitle">Compress, structure, and optimize — in seconds.</p>
+
+    <div class="card">
+        <form method="post" action="/optimize" id="optimizeForm">
+            <div class="label">Your prompt</div>
+            <textarea name="prompt" rows="3" placeholder="Type your rough prompt here..."
+                      th:text="${originalPrompt}"></textarea>
+
+            <input type="hidden" name="strategyChoice" id="strategyChoiceInput" value="1"/>
+
+            <div class="label" style="margin-top: 16px;">Compression strategy</div>
+            <div class="strategy-grid">
+                <div class="strategy-option" data-value="1" onclick="selectStrategy(1)">
+                    <div class="strategy-num">1</div>
+                    <div>
+                        <div class="strategy-name">Remove redundancy</div>
+                        <div class="strategy-desc">Strips filler phrases like "can you please", "could you help me"</div>
+                    </div>
+                </div>
+                <div class="strategy-option" data-value="2" onclick="selectStrategy(2)">
+                    <div class="strategy-num">2</div>
+                    <div>
+                        <div class="strategy-name">Shorten words</div>
+                        <div class="strategy-desc">Swaps verbose words: "utilize" → "use", "demonstrate" → "show"</div>
+                    </div>
+                </div>
+                <div class="strategy-option" data-value="3" onclick="selectStrategy(3)">
+                    <div class="strategy-num">3</div>
+                    <div>
+                        <div class="strategy-name">Remove context</div>
+                        <div class="strategy-desc">Drops self-intro sentences like "I am a student", "as a beginner"</div>
+                    </div>
+                </div>
+                <div class="strategy-option" data-value="4" onclick="selectStrategy(4)">
+                    <div class="strategy-num">4</div>
+                    <div>
+                        <div class="strategy-name">Split question</div>
+                        <div class="strategy-desc">Splits compound prompts on "and" into Question 1 / Question 2</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">Optimize →</button>
+        </form>
+    </div>
+
+    <div class="card" th:if="${hasResult}">
+        <div class="divider">
+            <div class="divider-line"></div>
+            <div class="divider-text">Result</div>
+            <div class="divider-line"></div>
+        </div>
+
+        <div class="compare">
+            <div class="pane pane-before">
+                <div class="pane-tag pane-tag-before">Before</div>
+                <div class="pane-text pane-text-before" th:text="${originalPrompt}"></div>
+            </div>
+            <div class="pane pane-after">
+                <div class="pane-tag pane-tag-after">After</div>
+                <div class="pane-text pane-text-after" th:text="${optimizedPrompt}"></div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Original tokens</div>
+                <div class="stat-value">~<span th:text="${originalTokens}"></span></div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Compressed</div>
+                <div class="stat-value">~<span th:text="${compressedTokens}"></span></div>
+            </div>
+            <div class="stat stat-saved">
+                <div class="stat-label">Tokens saved</div>
+                <div class="stat-value" th:text="${savedTokens} + ' tokens'"></div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Domain</div>
+                <div class="stat-value" style="font-size:14px; padding-top:4px;">
+                    <span class="domain-pill" th:text="${domain}"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tip">Tip: copy the "After" text and paste it into ChatGPT or Claude for better results.</div>
+    </div>
+
+</div>
+
+<script>
+    function selectStrategy(val) {
+        document.querySelectorAll('.strategy-option').forEach(el => {
+            el.classList.remove('selected');
+        });
+        const selected = document.querySelector('.strategy-option[data-value="' + val + '"]');
+        if (selected) selected.classList.add('selected');
+        document.getElementById('strategyChoiceInput').value = val;
+    }
+
+    const savedChoice = /*[[${strategyChoice}]]*/ 1;
+    selectStrategy(savedChoice);
+</script>
+</body>
+</html>
