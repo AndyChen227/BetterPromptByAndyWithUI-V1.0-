@@ -1,17 +1,23 @@
 package org.example;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * DomainAnalyzer inspects the raw prompt text and returns the most likely Domain.
  *
  * Strategy: keyword counting.
- *   1. Lowercase the prompt so "Python" and "python" both match.
- *   2. Check how many CODE keywords appear, then how many WRITING keywords appear.
- *   3. Whichever count is higher wins. Tie → GENERAL.
+ *   1. Check how many CODE keywords appear, then how many WRITING keywords appear.
+ *   2. Whichever count is higher wins. Tie -> GENERAL.
  *
- * This is a simple rule-based approach — no machine learning needed.
- * It's easy to extend: just add more words to the lists below.
+ * This is a simple rule-based approach with no machine learning needed.
+ * It is easy to extend: just add more words to the lists below.
+ *
+ * WHY whole-word matching matters:
+ * Plain substring matching can count accidental hits inside larger words.
+ * For example, "class" should not match inside "classical".
+ * Whole-word matching improves prompt classification quality by counting
+ * only real keyword hits.
  */
 public class DomainAnalyzer {
 
@@ -44,14 +50,15 @@ public class DomainAnalyzer {
      * @return        CODE, WRITING, or GENERAL
      */
     public Domain analyze(String prompt) {
-        // Step 1: normalize to lowercase so matching is case-insensitive
-        String lower = prompt.toLowerCase();
+        if (prompt == null || prompt.isBlank()) {
+            return Domain.GENERAL;
+        }
 
-        // Step 2: count keyword hits for each domain
-        int codeScore    = countMatches(lower, CODE_KEYWORDS);
-        int writingScore = countMatches(lower, WRITING_KEYWORDS);
+        // Count keyword hits using case-insensitive whole-word matching.
+        int codeScore = countMatches(prompt, CODE_KEYWORDS);
+        int writingScore = countMatches(prompt, WRITING_KEYWORDS);
 
-        // Step 3: pick the winner (tie → GENERAL)
+        // Pick the winner. A tie falls back to GENERAL.
         if (codeScore > writingScore) {
             return Domain.CODE;
         } else if (writingScore > codeScore) {
@@ -63,19 +70,37 @@ public class DomainAnalyzer {
 
     /**
      * Counts how many keywords from the list appear in the text.
-     * Uses String.contains() — simple substring search.
+     * Whole-word matching avoids false positives from partial words.
      *
-     * @param text      the lowercased prompt
+     * @param text      the original prompt
      * @param keywords  the keyword list to check against
      * @return          number of matched keywords
      */
     private int countMatches(String text, List<String> keywords) {
         int count = 0;
         for (String keyword : keywords) {
-            if (text.contains(keyword)) {
+            if (containsWholeKeyword(text, keyword)) {
                 count++;
             }
         }
         return count;
+    }
+
+    /** Returns true when the full keyword appears as a standalone word or phrase. */
+    private boolean containsWholeKeyword(String text, String keyword) {
+        if (text == null || text.isBlank()) {
+            return false;
+        }
+
+        return buildWholeKeywordPattern(keyword).matcher(text).find();
+    }
+
+    /**
+     * Builds a case-insensitive pattern that matches a keyword only when it is
+     * not attached to letters or digits on either side.
+     */
+    private Pattern buildWholeKeywordPattern(String keyword) {
+        String regex = "(?i)(?<![A-Za-z0-9])" + Pattern.quote(keyword) + "(?![A-Za-z0-9])";
+        return Pattern.compile(regex);
     }
 }

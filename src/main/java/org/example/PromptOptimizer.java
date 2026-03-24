@@ -36,6 +36,14 @@ public class PromptOptimizer {
      * @return           the optimized prompt ready to paste into an AI tool
      */
     public String optimize(String rawPrompt) {
+        // Top-level pipeline classes should validate input early so later steps
+        // can assume they are working with a safe, consistent value.
+        if (rawPrompt == null || rawPrompt.isBlank()) {
+            lastDetectedDomain = Domain.GENERAL;
+            lastOptimizedPrompt = "";
+            return lastOptimizedPrompt;
+        }
+
         // Step 1: basic cleaning
         String cleaned = clean(rawPrompt);
 
@@ -75,6 +83,10 @@ public class PromptOptimizer {
      * @return     cleaned string
      */
     private String clean(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+
         // trim() removes whitespace from both ends.
         // replaceAll() uses a regex: \\s+ means "one or more whitespace characters".
         String result = raw.trim().replaceAll("\\s+", " ");

@@ -33,4 +33,19 @@ public class RuleLoader {
             throw new UncheckedIOException("Failed to load rules from: " + resourcePath, e);
         }
     }
+
+    /**
+     * Loads a JSON object into a simple Java class.
+     *
+     * This is useful when rule files need more structure than a plain string list.
+     */
+    public <T> T loadJson(String resourcePath, Class<T> type) {
+        ClassPathResource resource = new ClassPathResource(resourcePath);
+
+        try (InputStream inputStream = resource.getInputStream()) {
+            return objectMapper.readValue(inputStream, type);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to load rules from: " + resourcePath, e);
+        }
+    }
 }

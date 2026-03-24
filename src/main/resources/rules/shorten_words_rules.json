@@ -1,0 +1,12 @@
+{
+  "replacements": [
+    { "from": "utilize", "to": "use" },
+    { "from": "demonstrate", "to": "show" },
+    { "from": "implement", "to": "build" },
+    { "from": "regarding", "to": "about" },
+    { "from": "obtain", "to": "get" },
+    { "from": "sufficient", "to": "enough" },
+    { "from": "assistance", "to": "help" },
+    { "from": "therefore", "to": "so" }
+  ]
+}

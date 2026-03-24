@@ -1,0 +1,11 @@
+{
+  "patterns": [
+    { "pattern": "(?i)^i am a (student|beginner|learner|developer|newcomer).*" },
+    { "pattern": "(?i)^i am (learning|new to|studying).*" },
+    { "pattern": "(?i)^as a (student|beginner|learner|newcomer).*" },
+    { "pattern": "(?i)^i'm (learning|new to|studying).*" },
+    { "pattern": "(?i)^i'm a (student|beginner|learner).*" },
+    { "pattern": "(?i)^just started.*" },
+    { "pattern": "(?i)^i have no experience.*" }
+  ]
+}
